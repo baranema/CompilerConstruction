@@ -255,6 +255,11 @@ def p_intconst(p):
     p[0] = ast.IntConst(int(p[1])).at(loc(p))
 
 
+def p_floatconst(p):
+    '''expr : fLOATCONST'''
+    p[0] = ast.IntConst(float(p[1])).at(loc(p))
+
+
 def p_hexconst(p):
     '''expr : HEXCONST'''
     p[0] = ast.HexConst(int(p[1][2:], 16)).at(loc(p))
