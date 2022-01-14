@@ -1,4 +1,6 @@
 from llvmlite import ir, binding
+
+import desugar
 from util import ASTTransformer
 import ast
 
@@ -170,6 +172,57 @@ class IRGen(ASTTransformer):
 
         return ret
 
+    def visitFor(self, node):
+        desugar.visitFor(self, node)
+
+    def visitWhile(self, node):
+        condition = self.add_block(self.builder.block.name + '.whilecond')
+        body = self.add_block(self.builder.block.name + '.whilebody')
+        end = self.add_block(self.builder.block.name + '.whileend')
+
+        loop = (condition, end)
+        self.loops.append(loop)
+
+        self.builder.branch(condition)
+        self.builder.position_at_start(condition)
+
+        self.insert_blocks.append(body)
+        cond_visit = self.visit(node.cond)
+        self.insert_blocks.pop()
+        self.builder.cbranch(cond_visit, body, end)
+
+        self.builder.position_at_start(body)
+        self.insert_blocks.append(end)
+        self.visit(node.body)
+        self.insert_blocks.pop()
+
+        self.builder.branch(condition)
+        self.builder.position_at_start(end)
+
+    def visitDoWhile(self, node):
+        condition = self.add_block(self.builder.block.name + '.dowcond')
+        body = self.add_block(self.builder.block.name + '.dowbody')
+        end = self.add_block(self.builder.block.name + '.dowend')
+
+        self.builder.branch(condition)
+
+        loop = (condition, end)
+        self.loops.append(loop)
+
+        self.builder.cbranch(self.visit_before(node.cond, body), body, end)
+        self.builder.position_at_start(condition)
+
+        self.builder.position_at_start(body)
+        self.visit_before(node.body, end)
+
+        self.builder.position_at_start(end)
+
+    def visitBreak(self, node):
+        self.builder.branch(self.loops[0][1])
+
+    def visitContinue(self, node):
+        self.visitAssignment(node)
+
     def visitVarDef(self, node):
         ty = self.getty(node._type)
         self.vars[node] = alloca = self.builder.alloca(ty, name=node.name)
@@ -230,7 +283,9 @@ class IRGen(ASTTransformer):
             return self.visit(ast.BinaryOp(node.value, eq, false).at(node))
 
         if node.op == '-':
-            return self.builder.neg(self.visit(node.value))
+            if str(node.ty) == 'int':
+                return self.builder.neg(self.visit(node.value))
+            return self.builder.fsub(ir.Constant(self.getty(node.ty), 0), self.visit(node.value))
 
         assert node.op == '~'
         return self.builder.not_(self.visit(node.value))
@@ -248,14 +303,24 @@ class IRGen(ASTTransformer):
             yes = self.makebool(True)
             return self.lazy_conditional(node, node.lhs, yes, node.rhs)
 
+        rhs = node.rhs.ty
+        lhs = node.lhs.ty
+
         self.visit_children(node)
 
         if op.is_equality() or op.is_relational():
-            return b.icmp_signed(op.op, node.lhs, node.rhs)
+            if str(rhs) == 'int' and str(lhs) == 'int':
+                return b.icmp_signed(op.op, node.lhs, node.rhs)
+            else:
+                if op == "!=":
+                    return b.fcmp_unordered(op.op, node.lhs, node.rhs)
+                else:
+                    return b.fcmp_ordered(op.op, node.lhs, node.rhs)
 
-        callbacks = {
-            '+': b.add, '-': b.sub, '*': b.mul, '/': b.sdiv, '%': b.srem
-        }
+        if str(rhs) == 'int' and str(lhs) == 'int':
+            callbacks = { '+': b.add, '-': b.sub, '*': b.mul, '/': b.sdiv, '%': b.srem }
+        else:
+            callbacks = { '+': b.fadd, '-': b.fsub, '*': b.fmul, '/': b.fdiv, '%': b.frem }
 
         return callbacks[op.op](node.lhs, node.rhs)
 
@@ -298,6 +363,9 @@ class IRGen(ASTTransformer):
     def visitIntConst(self, node):
         return ir.Constant(self.getty(node.ty), node.value)
 
+    def visitFloatConst(self, node):
+        return ir.Constant(self.getty(node.ty), node.value)
+
     def visitStringConst(self, node):
         # name is unique, based on simple counter
         name = '.str.%d' % self.nstrings
@@ -334,6 +402,9 @@ class IRGen(ASTTransformer):
 
         if str(ty) == 'int':
             return ir.IntType(ast.Type.int_bits)
+
+        if str(ty) == 'float':
+            return ir.DoubleType()
 
         assert str(ty) == 'void'
         return ir.VoidType()

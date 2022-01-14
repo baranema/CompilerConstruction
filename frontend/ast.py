@@ -352,6 +352,41 @@ class Block(Statement):
         return '{\n%s\n}' % indented
 
 
+class For(Statement):
+    children = ['ref', 'exp1', 'exp2', 'body']
+    types = dict(ref='str', exp1='Expression', exp2='Expression', body='Block')
+
+    def __str__(self):
+        return 'for (int {ref} = {exp1} to {exp2}) {body}'.format(ref = self.ref, exp1 = self.exp1,
+                                                                  exp2 = self.exp2, body = self.body);
+class While(Statement):
+    children = ['cond', 'body']
+    types = dict(cond='Expression', body='Block')
+
+    def __str__(self):
+        return 'while ({0.%s}) {0.%s}', (self.cond, self.body)
+
+class DoWhile(Statement):
+    children = ['body', 'cond']
+    types = dict(body='Block', cond='Expression')
+
+    def __str__(self):
+        return 'do ({0.%s}) while {0.%s}', (self.body, self.cond)
+
+class Break(Statement):
+    children = []
+    types = dict()
+
+    def __str__(self):
+         return 'break;'
+
+class Continue(Statement):
+    children = []
+    types = dict()
+
+    def __str__(self):
+        return 'continue;'
+
 class VarDef(Statement):
     children = ['_type', 'name', 'value']
     types = dict(_type='Type', name='str', value='Expression')
@@ -453,12 +488,14 @@ class IntConst(Const):
     def __str__(self):
         return str(self.value)
 
+
 class FloatConst(Const):
     children = ['value']
     types = dict(value='float')
 
     def __str__(self):
         return str(self.value)
+
 
 class HexConst(IntConst):
     def __str__(self):

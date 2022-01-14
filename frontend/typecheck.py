@@ -22,19 +22,20 @@ class TypeChecker(ASTVisitor):
         self.tbool = Type.get('bool')
         self.tchar = Type.get('char')
         self.tint = Type.get('int')
+        self.tfloat = Type.get('float')
         self.tvoid = Type.get('void')
+        self.loop = False
         self.curfn = None
-        self.in_loop = False
 
     def operand_types(self, operator):
         if operator.is_logical():
             return [self.tbool]
 
         if operator.is_arithmetic() or operator.is_relational():
-            return [self.tchar, self.tint]
+            return [self.tchar, self.tint, self.tfloat]
 
         assert operator.is_equality()
-        return [self.tbool, self.tchar, self.tint]
+        return [self.tbool, self.tchar, self.tint, self.tfloat]
 
     def check_type(self, node, *expected):
         if node.ty not in expected:
@@ -144,6 +145,24 @@ class TypeChecker(ASTVisitor):
             raise NodeError(node,
                     'Error: non-void function must not return void')
 
+    def visitWhile(self, node):
+        self.loop = True
+        self.visit_children(node)
+        self.check_type(node.cond, self.tbool)
+
+    def visitDoWhile(self, node):
+        self.loop = True
+        self.visit_children(node)
+        self.check_type(node.cond, self.tbool)
+
+    def visitBreak(self, node):
+        if self.loop == False:
+            raise NodeError('Error: "break" is not in loop')
+
+    def visitContinue(self, node):
+        if self.loop == False:
+            raise NodeError('Error: "continue" is not in loop')
+
     def visitVarUse(self, node):
         # variable uses inherit the type of their declaration
         ty = node.definition._type
@@ -232,6 +251,9 @@ class TypeChecker(ASTVisitor):
 
     def visitIntConst(self, node):
         node.ty = self.tint
+
+    def visitFloatConst(self, node):
+        node.ty = self.tfloat
 
     def visitStringConst(self, node):
         node.ty = ArrayType.get(self.tchar)

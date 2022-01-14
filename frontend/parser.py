@@ -7,8 +7,14 @@ from util import LocationError, FatalError
 
 # operator precedence as per http://www.swansontec.com/sopc.html
 precedence = (
+    ('nonassoc', 'FOR'),
+    ('nonassoc', 'TO'),
+    ('nonassoc', 'WHILE'),
+    ('nonassoc', 'DO'),
     ('nonassoc', 'IF'),
     ('nonassoc', 'ELSE'),
+    ('nonassoc', 'BREAK'),
+    ('nonassoc', 'CONTINUE'),
     ('left', 'OR'),
     ('left', 'AND'),
     ('left', 'EQ', 'NE'),
@@ -16,7 +22,7 @@ precedence = (
     ('left', 'PLUS', 'MINUS'),
     ('left', 'TIMES', 'DIVIDE', 'MODULO'),
     ('right', 'NOT', 'UMINUS', 'INV'),
-    ('left', 'LBRACKET'),
+    ('left', 'LBRACKET')
 )
 
 
@@ -176,11 +182,29 @@ def p_return(p):
                  | RETURN expr SEMICOL'''
     p[0] = ast.Return(p[2] if len(p) == 4 else None).at(loc(p, 1, -2))
 
+def p_for(p):
+    '''statement : FOR LPAREN type ID ASSIGN expr TO expr RPAREN statement'''
+    p[0] = ast.For(p[4], p[6], p[8], block(p[10])).at(loc(p, 1, 8))
+
+def p_while(p):
+    '''statement : WHILE LPAREN expr RPAREN statement'''
+    p[0] = ast.While(p[3], block(p[5])).at(loc(p, 1))
+
+def p_do_while(p):
+    '''statement : DO statement WHILE LPAREN expr RPAREN SEMICOL'''
+    p[0] = ast.DoWhile(block(p[2]), p[5]).at(loc(p, 3, 5))
+
+def p_break(p):
+    '''statement : BREAK SEMICOL'''
+    p[0] = ast.Break().at(loc(p, 1))
+
+def p_continue(p):
+    '''statement : CONTINUE SEMICOL'''
+    p[0] = ast.Continue().at(loc(p, 1))
 
 def p_varuse(p):
     '''expr : ID'''
     p[0] = ast.VarUse(p[1]).at(loc(p))
-
 
 def p_index(p):
     '''index : expr LBRACKET expr RBRACKET
@@ -199,7 +223,6 @@ def p_paren(p):
     '''expr : LPAREN expr RPAREN'''
     p[0] = p[2]
 
-
 def p_binop(p):
     '''expr : expr PLUS expr
             | expr MINUS expr
@@ -215,7 +238,6 @@ def p_binop(p):
             | expr AND expr
             | expr OR expr'''
     p[0] = ast.BinaryOp(p[1], ast.Operator.get(p[2]), p[3]).at(loc(p))
-
 
 def p_unop(p):
     '''expr : NOT expr
@@ -254,10 +276,9 @@ def p_intconst(p):
     '''expr : INTCONST'''
     p[0] = ast.IntConst(int(p[1])).at(loc(p))
 
-
 def p_floatconst(p):
-    '''expr : fLOATCONST'''
-    p[0] = ast.IntConst(float(p[1])).at(loc(p))
+    '''expr : FLOATCONST'''
+    p[0] = ast.FloatConst(float(p[1])).at(loc(p))
 
 
 def p_hexconst(p):
