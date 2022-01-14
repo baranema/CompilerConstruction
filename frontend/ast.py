@@ -351,7 +351,6 @@ class Block(Statement):
         indented = tab + code.replace('\n', '\n' + tab).rstrip()
         return '{\n%s\n}' % indented
 
-
 class For(Statement):
     children = ['ref', 'exp1', 'exp2', 'body']
     types = dict(ref='str', exp1='Expression', exp2='Expression', body='Block')
@@ -374,16 +373,10 @@ class DoWhile(Statement):
         return 'do ({0.%s}) while {0.%s}', (self.body, self.cond)
 
 class Break(Statement):
-    children = []
-    types = dict()
-
     def __str__(self):
          return 'break;'
 
 class Continue(Statement):
-    children = []
-    types = dict()
-
     def __str__(self):
         return 'continue;'
 
@@ -443,7 +436,7 @@ class BinaryOp(Expression):
 
     def __str__(self):
         return '({0.lhs} {0.op} {0.rhs})'.format(self)
-
+ 
 
 class UnaryOp(Expression):
     children = ['op', 'value']
