@@ -206,6 +206,7 @@ def p_varuse(p):
     '''expr : ID'''
     p[0] = ast.VarUse(p[1]).at(loc(p))
 
+
 def p_index(p):
     '''index : expr LBRACKET expr RBRACKET
        expr : index'''
@@ -223,6 +224,7 @@ def p_paren(p):
     '''expr : LPAREN expr RPAREN'''
     p[0] = p[2]
 
+
 def p_binop(p):
     '''expr : expr PLUS expr
             | expr MINUS expr
@@ -238,6 +240,7 @@ def p_binop(p):
             | expr AND expr
             | expr OR expr'''
     p[0] = ast.BinaryOp(p[1], ast.Operator.get(p[2]), p[3]).at(loc(p))
+
 
 def p_unop(p):
     '''expr : NOT expr

@@ -351,6 +351,7 @@ class Block(Statement):
         indented = tab + code.replace('\n', '\n' + tab).rstrip()
         return '{\n%s\n}' % indented
 
+
 class For(Statement):
     children = ['ref', 'exp1', 'exp2', 'body']
     types = dict(ref='str', exp1='Expression', exp2='Expression', body='Block')
@@ -488,7 +489,6 @@ class FloatConst(Const):
 
     def __str__(self):
         return str(self.value)
-
 
 class HexConst(IntConst):
     def __str__(self):

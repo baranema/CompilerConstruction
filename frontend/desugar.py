@@ -31,7 +31,6 @@ class Desugarer(ASTTransformer):
         self.visit_children(m)
         return Assignment(m.ref, BinaryOp(m.ref, m.op, m.value)).at(m)
 
-
     def visitFor(self, node):
         self.visit_children(node)
 
@@ -44,5 +43,3 @@ class Desugarer(ASTTransformer):
         condition = BinaryOp(VarUse(node.ref), Operator("<"), node.exp2).at(node)
 
         return Block([index, While(condition, body).at(node)]).at(node)
-
-

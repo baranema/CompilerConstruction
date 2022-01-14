@@ -24,8 +24,8 @@ class TypeChecker(ASTVisitor):
         self.tint = Type.get('int')
         self.tfloat = Type.get('float')
         self.tvoid = Type.get('void')
-        self.loop = False
         self.curfn = None
+        self.in_loop = False
 
     def operand_types(self, operator):
         if operator.is_logical():
@@ -40,7 +40,7 @@ class TypeChecker(ASTVisitor):
     def check_type(self, node, *expected):
         if node.ty not in expected:
             raise NodeError(node, 'Type mismatch: expected %s, got %s',
-                    '/'.join(map(str, expected)), node.ty)
+                            '/'.join(map(str, expected)), node.ty)
 
     def visitGlobalDec(self, node):
         # cannot define void globals
@@ -63,13 +63,13 @@ class TypeChecker(ASTVisitor):
         # initializer must be constant
         if not isinstance(node.value, Const):
             raise NodeError(node.value,
-                    'Error: global initializer must be constant')
+                            'Error: global initializer must be constant')
 
     def visitFunDef(self, node):
         # functions can only return basic types
         if node._type.return_type.is_array():
             raise NodeError(node,
-                    'Error: functions can only return basic type or void')
+                            'Error: functions can only return basic type or void')
 
         self.curfn = node
         self.visit_children(node)
@@ -80,7 +80,7 @@ class TypeChecker(ASTVisitor):
             stat = node.body.statements
             if not len(stat) or not isinstance(stat[-1], Return):
                 raise NodeError(node,
-                        'Error: non-void function must end with return')
+                                'Error: non-void function must end with return')
 
     def visitParam(self, node):
         # cannot define void parameters
@@ -138,12 +138,12 @@ class TypeChecker(ASTVisitor):
 
         if node.value and is_void:
             raise NodeError(node.value,
-                    'Error: void function must not return a value')
+                            'Error: void function must not return a value')
         elif node.value:
             self.check_type(node.value, retty)
         elif not is_void:
             raise NodeError(node,
-                    'Error: non-void function must not return void')
+                            'Error: non-void function must not return void')
 
     def visitWhile(self, node):
         self.loop = True
@@ -156,12 +156,10 @@ class TypeChecker(ASTVisitor):
         self.check_type(node.cond, self.tbool)
 
     def visitBreak(self, node):
-        if self.loop == False:
-            raise NodeError('Error: "break" is not in loop')
+        assert self.loop == False
 
     def visitContinue(self, node):
-        if self.loop == False:
-            raise NodeError('Error: "continue" is not in loop')
+        assert self.loop == False
 
     def visitVarUse(self, node):
         # variable uses inherit the type of their declaration
@@ -173,9 +171,9 @@ class TypeChecker(ASTVisitor):
 
             if not ty.is_array():
                 raise BackrefError(node.location,
-                        'Error: cannot index non-array variable',
-                        node.definition.location,
-                        'Note: variable is defined here')
+                                   'Error: cannot index non-array variable',
+                                   node.definition.location,
+                                   'Note: variable is defined here')
 
             ty = ty.base
 
@@ -189,7 +187,7 @@ class TypeChecker(ASTVisitor):
         self.visit_children(node)
         if not node.base.ty.is_array():
             raise NodeError(node.base, 'Expected array type, got %s',
-                    node.base.ty)
+                            node.base.ty)
         self.check_type(node.index, self.tint)
         node.ty = node.base.ty.base
 
@@ -226,15 +224,15 @@ class TypeChecker(ASTVisitor):
         if funty.varargs:
             if nargs < nparams:
                 raise BackrefError(node.location,
-                        'Not enough arguments for varargs function', *defargs)
+                                   'Not enough arguments for varargs function', *defargs)
 
             typed_args = node.args[:len(funty.params)]
 
         elif nargs != nparams:
             errnode = node.args[nparams] if nargs > nparams else node
             raise BackrefError(errnode.location,
-                    'Expected %d arguments, got %d' % (nparams, nargs),
-                    *defargs)
+                               'Expected %d arguments, got %d' % (nparams, nargs),
+                               *defargs)
 
         # argument types must match defined parameter types
         for arg, param in zip(typed_args, funty.params):

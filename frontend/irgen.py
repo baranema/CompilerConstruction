@@ -1,6 +1,4 @@
 from llvmlite import ir, binding
-
-import desugar
 from util import ASTTransformer
 import ast
 
@@ -158,23 +156,6 @@ class IRGen(ASTTransformer):
         # go to the end block to emit further instructions
         self.builder.position_at_start(bend)
 
-    def visitReturn(self, node):
-        self.visit_children(node)
-
-        b = self.builder
-        ret = b.ret_void() if node.value is None else b.ret(node.value)
-
-        # a `ret` instruction terminates the current block, so start a new basic
-        # block to emit further instructions, unless this return is the last
-        # statement in the function
-        if node is not self.terminating_return:
-            b.position_at_start(self.add_block('post_return'))
-
-        return ret
-
-    def visitFor(self, node):
-        desugar.visitFor(self, node)
-
     def visitWhile(self, node):
         condition = self.add_block(self.builder.block.name + '.whilecond')
         body = self.add_block(self.builder.block.name + '.whilebody')
@@ -222,6 +203,20 @@ class IRGen(ASTTransformer):
 
     def visitContinue(self, node):
         self.visitAssignment(node)
+
+    def visitReturn(self, node):
+        self.visit_children(node)
+
+        b = self.builder
+        ret = b.ret_void() if node.value is None else b.ret(node.value)
+
+        # a `ret` instruction terminates the current block, so start a new basic
+        # block to emit further instructions, unless this return is the last
+        # statement in the function
+        if node is not self.terminating_return:
+            b.position_at_start(self.add_block('post_return'))
+
+        return ret
 
     def visitVarDef(self, node):
         ty = self.getty(node._type)
