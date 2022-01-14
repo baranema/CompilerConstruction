@@ -436,7 +436,7 @@ class BinaryOp(Expression):
 
     def __str__(self):
         return '({0.lhs} {0.op} {0.rhs})'.format(self)
- 
+
 
 class UnaryOp(Expression):
     children = ['op', 'value']

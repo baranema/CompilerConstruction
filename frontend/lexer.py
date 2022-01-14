@@ -14,10 +14,10 @@ states = (
 # added as tokens below, which are returned by `t_ID`
 reserved = (
     'extern', 'static',
+    'for', 'to', 'while', 'do',
+    'break', 'continue',
     'if', 'else',
-    'return',
-    'do', 'while', 'for', 'to',
-    'break', 'continue'
+    'return'
 )
 reserved_map = dict((word, word.upper()) for word in reserved)
 
@@ -34,7 +34,7 @@ tokens = (
     'NOT', 'INV',
     'TYPE',
     'MODIFY',
-    'BOOLCONST', 'CHARCONST', 'INTCONST', 'HEXCONST', 'FLOATCONST',
+    'BOOLCONST', 'CHARCONST', 'INTCONST', 'FLOATCONST', 'HEXCONST',
     'STRINGCONST',
     'DOTS',
     'ID',
@@ -45,7 +45,7 @@ tokens = (
 reserved_map['bool']  = 'TYPE'
 reserved_map['char']  = 'TYPE'
 reserved_map['int']   = 'TYPE'
-reserved_map['float'] = 'TYPE'
+reserved_map['float']   = 'TYPE'
 reserved_map['void']  = 'TYPE'
 reserved_map['true']  = 'BOOLCONST'
 reserved_map['false'] = 'BOOLCONST'
@@ -99,13 +99,13 @@ def t_ID(t):
 
 
 def t_number(t):
-    r'0x[a-fA-F0-9]+|\d*\.\d+|\d+\.\d*|\d+'
+    r'0x[a-fA-F0-9]+|([0-9])*([.])[0-9]+|([0-9])+([.])[0-9]*|\d+'
     if t.value.startswith('0x'):
         t.type = 'HEXCONST'     # e.g. 0xabc123
     elif t.value.isdigit():
         t.type = 'INTCONST'     # e.g. 123
-    elif "." in t.value:
-        t.type = 'FLOATCONST'   # e.g. 123.456
+    elif t.value.replace('.', '', 1).isdigit():
+        t.type = 'FLOATCONST'
     return t
 
 
