@@ -6,14 +6,9 @@ int main() {
             printf("odd i: %d\n", i);
         }
 
-        continue;
+        continue; //#shouldnt skip entire loop but only goto next iteration!
     }
 
     printf("done\n");
     return 0;
 }
-
-
-
-
-
