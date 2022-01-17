@@ -145,7 +145,9 @@ class IRGen(ASTTransformer):
         # insert instructions for the 'if' block before the 'else' block
         self.builder.position_at_start(bif)
         self.visit_before(node.yesbody, belse)
-        self.builder.branch(bend)
+
+        if self.builder.block.is_terminated == False:
+            self.builder.branch(bend)
 
         # insert instructions for the 'else' block before the end block
         if node.nobody:
