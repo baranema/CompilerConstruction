@@ -1,6 +1,6 @@
 extern int printf(char[] format, ...);
 
-int main() {
+int main() { //works
     int i = 0;
     while (i < 5) {
         if (i == 3)
@@ -10,3 +10,14 @@ int main() {
     }
     return 0;
 }
+
+int main() { //break breaks
+    int i = 0;
+    while (i < 5) {
+        break;
+        printf("%d\n", i);
+        i += 1;
+    }
+    return 0;
+}
+

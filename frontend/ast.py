@@ -345,7 +345,6 @@ class Block(Statement):
     def __str__(self):
         if not self.statements:
             return '{}'
-
         code = '\n'.join(map(str, self.statements))
         tab = '    '
         indented = tab + code.replace('\n', '\n' + tab).rstrip()
@@ -364,14 +363,14 @@ class While(Statement):
     types = dict(cond='Expression', body='Block')
 
     def __str__(self):
-        return 'while ({0.%s}) {0.%s}', (self.cond, self.body)
+        return 'while ({0.cond}) {{0.body}}'.format(self)
 
 class DoWhile(Statement):
     children = ['body', 'cond']
     types = dict(body='Block', cond='Expression')
 
     def __str__(self):
-        return 'do ({0.%s}) while {0.%s}', (self.body, self.cond)
+        return 'do ({0.body}) while {0.cond}'.format(self)
 
 class Break(Statement):
     def __str__(self):
