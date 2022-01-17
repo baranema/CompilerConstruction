@@ -2,13 +2,10 @@ extern int printf(char[] format, ...);
 
 int main() {
     int i = 0;
-
-    while(0 == 0){ 
-        {
-            break;
-        }
-        break;
-        printf("bad bad print\n");
+    while(i < 3) {
+        i+=1;
+        continue;
+        printf("never shall I print\n");
     }
 
     printf("done\n");
