@@ -25,7 +25,7 @@ class TypeChecker(ASTVisitor):
         self.tfloat = Type.get('float')
         self.tvoid = Type.get('void')
         self.curfn = None
-        self.in_loop = False
+        self.loop = False
 
     def operand_types(self, operator):
         if operator.is_logical():
@@ -156,10 +156,10 @@ class TypeChecker(ASTVisitor):
         self.check_type(node.cond, self.tbool)
 
     def visitBreak(self, node):
-        assert self.loop == False
+        assert self.loop, "Error: 'break' must be inside loop!"
 
     def visitContinue(self, node):
-        assert self.loop == False
+        assert self.loop, "Error: 'continue' must be inside loop!"
 
     def visitVarUse(self, node):
         # variable uses inherit the type of their declaration
