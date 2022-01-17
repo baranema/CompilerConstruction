@@ -170,6 +170,8 @@ class IRGen(ASTTransformer):
 
         # insert instructions for the predicate condition before the 'if' block
         #cond = self.visit_before(node.cond, whileCond)
+        self.builder.branch(whileCond)
+        self.builder.position_at_start(whileCond)
         cond = self.visit_before(node.cond, whileCond)
         self.builder.cbranch(cond, whileBlock, whileEnd)
 
@@ -283,30 +285,21 @@ class IRGen(ASTTransformer):
             return self.lazy_conditional(node, node.lhs, yes, node.rhs)
 
         lhsTy = str(node.lhs.ty)
-        rhsTy = str(node.rhs.ty)
-
         self.visit_children(node)
 
         if op.is_equality() or op.is_relational():
-            if str(node.rhs.ty) == str(node.lhs.ty) == 'int':
-                return b.icmp_signed(op.op, node.lhs, node.rhs)
-            elif str(node.rhs.ty) == str(node.lhs.ty) == 'float':
+            if lhsTy == 'float':
                 return b.fcmp_ordered(op.op, node.lhs, node.rhs)
             else:
-                print("un handled set of types in visit binary op!", file=sys.stdout)
-                quit() #ensure that its visable when this happens, remove though some point
+                return b.icmp_signed(op.op, node.lhs, node.rhs)
 
-        if rhsTy != lhsTy:
-            print("different types!!!", file=sys.stdout)
-            quit()
-
-        callbacks = {
-            '+': b.add, '-': b.sub, '*': b.mul, '/': b.sdiv, '%': b.srem
-        }
-
-        if lhsTy == rhsTy == 'float':
+        if lhsTy == 'float':
             callbacks = {
                 '+': b.fadd, '-': b.fsub, '*': b.fmul, '/': b.fdiv, '%': b.frem
+            }
+        else:
+            callbacks = {
+                '+': b.add, '-': b.sub, '*': b.mul, '/': b.sdiv, '%': b.srem
             }
 
         return callbacks[op.op](node.lhs, node.rhs)
