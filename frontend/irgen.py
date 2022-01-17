@@ -166,7 +166,8 @@ class IRGen(ASTTransformer):
         loop = (condition, end)
         self.loops.append(loop)
 
-        self.builder.branch(condition)
+        if not self.builder.block.is_terminated:
+            self.builder.branch(condition)
         self.builder.position_at_start(condition)
 
         self.insert_blocks.append(body)
@@ -179,29 +180,36 @@ class IRGen(ASTTransformer):
         self.visit(node.body)
         self.insert_blocks.pop()
 
-        self.builder.branch(condition)
+        if not self.builder.block.is_terminated:
+            self.builder.branch(condition)
         self.builder.position_at_start(end)
 
     def visitDoWhile(self, node):
-        condition = self.add_block(self.builder.block.name + '.dowcond')
         body = self.add_block(self.builder.block.name + '.dowbody')
+        condition = self.add_block(self.builder.block.name + '.dowcond')
         end = self.add_block(self.builder.block.name + '.dowend')
-
-        self.builder.branch(condition)
 
         loop = (condition, end)
         self.loops.append(loop)
 
-        self.builder.cbranch(self.visit_before(node.cond, body), body, end)
-        self.builder.position_at_start(condition)
+        if not self.builder.block.is_terminated:
+            self.builder.branch(body) # good practice apparantly
 
-        self.builder.position_at_start(body)
-        self.visit_before(node.body, end)
+        self.builder.position_at_start(body) # body of loop
+        self.visit_before(node.body, body)
+
+        if not self.builder.block.is_terminated:
+            self.builder.branch(condition)
+
+        self.builder.position_at_start(condition) # add while cond at bottom
+        self.builder.cbranch(self.visit_before(node.cond, condition), body, end)
 
         self.builder.position_at_start(end)
 
     def visitBreak(self, node):
-        self.builder.branch(self.loops[0][1])
+        end = self.loops[len(self.loops) - 1][1]
+        self.loops.remove(self.loops[len(self.loops) - 1])
+        self.builder.branch(end)
 
     def visitContinue(self, node):
         self.visitAssignment(node)
