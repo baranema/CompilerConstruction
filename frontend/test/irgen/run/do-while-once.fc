@@ -1,0 +1,12 @@
+extern int printf(char[] format, ...);
+
+int main() {
+    int i = 3;
+
+    do {
+        printf("print me pretty please\n");
+    } while(1 == 0);
+
+    printf("done\n");
+    return 0;
+}
