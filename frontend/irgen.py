@@ -284,16 +284,19 @@ class IRGen(ASTTransformer):
             yes = self.makebool(True)
             return self.lazy_conditional(node, node.lhs, yes, node.rhs)
 
-        lhsTy = str(node.lhs.ty)
+        isFloat = (str(node.lhs.ty) == 'float')
         self.visit_children(node)
 
         if op.is_equality() or op.is_relational():
-            if lhsTy == 'float':
-                return b.fcmp_ordered(op.op, node.lhs, node.rhs)
+            if isFloat:
+                if op == '!=':
+                    return b.fcmp_unordered(op.op, node.lhs, node.rhs)
+                else:
+                    return b.fcmp_ordered(op.op, node.lhs, node.rhs)
             else:
                 return b.icmp_signed(op.op, node.lhs, node.rhs)
 
-        if lhsTy == 'float':
+        if isFloat:
             callbacks = {
                 '+': b.fadd, '-': b.fsub, '*': b.fmul, '/': b.fdiv, '%': b.frem
             }
