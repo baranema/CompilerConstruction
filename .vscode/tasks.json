@@ -1,0 +1,15 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        // {
+        //     "label": "activate-coco-env",
+        //     "type": "shell",
+        //     "command": "source /home/coco/coco-host/coco/shrc",
+        //     "problemMatcher": [],
+        //     "group": {
+        //         "kind": "build",
+        //         "isDefault": true
+        //     }
+        // }
+    ]
+}
