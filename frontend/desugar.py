@@ -26,7 +26,7 @@ class Desugarer(ASTTransformer):
         self.varcache_stack.pop()
 
     def visitModification(self, m):
-        # from: lhs op= rhs
+        # from: lhs op = rhs
         # to:   lhs = lhs op rhs
         self.visit_children(m)
         return Assignment(m.ref, BinaryOp(m.ref, m.op, m.value)).at(m)
@@ -34,12 +34,13 @@ class Desugarer(ASTTransformer):
     def visitFor(self, node):
         self.visit_children(node)
 
-        index = VarDef(Type.get("int"), f"{VarUse(node.ref)}", node.exp1).at(node)
-
         new_value = BinaryOp(VarUse(node.ref), Operator("+"), IntConst(1))
         inc_index = Assignment(VarUse(node.ref), new_value).at(node)
 
         body = Block([node.body, inc_index]).at(node)
         condition = BinaryOp(VarUse(node.ref), Operator("<"), node.exp2).at(node)
 
+        index = VarDef(Type.get("int"), f"{VarUse(node.ref)}", node.exp1).at(node)
+
         return Block([index, While(condition, body).at(node)]).at(node)
+ 
