@@ -183,20 +183,21 @@ class IRGen(ASTTransformer):
         self.builder.position_at_start(end)
 
     def visitDoWhile(self, node):
-        condition = self.add_block(self.builder.block.name + '.dowcond')
         body = self.add_block(self.builder.block.name + '.dowbody')
+        condition = self.add_block(self.builder.block.name + '.dowcond')
         end = self.add_block(self.builder.block.name + '.dowend')
-
-        self.builder.branch(condition)
 
         loop = (condition, end)
         self.loops.append(loop)
 
-        self.builder.cbranch(self.visit_before(node.cond, body), body, end)
-        self.builder.position_at_start(condition)
+        self.builder.branch(body) # good practice apparantly
 
-        self.builder.position_at_start(body)
-        self.visit_before(node.body, end)
+        self.builder.position_at_start(body) # body of loop
+        self.visit_before(node.body, body)
+        self.builder.branch(condition)
+
+        self.builder.position_at_start(condition) # add while cond at bottom
+        self.builder.cbranch(self.visit_before(node.cond, condition), body, end)
 
         self.builder.position_at_start(end)
 

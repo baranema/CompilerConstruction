@@ -192,6 +192,9 @@ def p_while(p):
 
 def p_do_while(p):
     '''statement : DO statement WHILE LPAREN expr RPAREN SEMICOL'''
+    # print("debug:")
+    # print(p[2])
+    # print(p[5])
     p[0] = ast.DoWhile(block(p[2]), p[5]).at(loc(p, 3, 5))
 
 def p_break(p):
