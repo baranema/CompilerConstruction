@@ -1,0 +1,11 @@
+extern int printf(char[] format, ...);
+
+int main() {
+    for (int i = 0 to 3) {
+        continue;
+        printf("never shall I print\n");
+    }
+
+    printf("done\n");
+    return 0;
+}
