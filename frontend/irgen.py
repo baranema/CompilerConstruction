@@ -166,14 +166,17 @@ class IRGen(ASTTransformer):
         whileBlock = self.add_block(prefix + '.whileBlock')
         whileEnd = self.add_block(prefix + '.whileEnd')
 
+        #https://en.wikipedia.org/wiki/Control-flow_graph picture of while loop flow.
+
         # insert instructions for the predicate condition before the 'if' block
+        #cond = self.visit_before(node.cond, whileCond)
         cond = self.visit_before(node.cond, whileCond)
         self.builder.cbranch(cond, whileBlock, whileEnd)
 
         # insert instructions for the 'if' block before the 'else' block
         self.builder.position_at_start(whileBlock)
         self.visit_before(node.body, whileEnd)
-        self.builder.cbranch(cond, whileBlock, whileEnd)
+        self.builder.branch(whileCond)
 
         # go to the end block to emit further instructions
         self.builder.position_at_start(whileEnd)
