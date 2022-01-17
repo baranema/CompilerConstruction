@@ -6,13 +6,13 @@ int main() {
     printf("do while loop:\n");
     do {
         printf("%d\n", i);
-        i--;
+        i-=1;
     } while(i > 0);
 
     printf("while loop:\n");
     while(i < 5){
         printf("%d\n", i);
-        i++;
+        i+=1;
     }
 
     printf("for loop:\n");
