@@ -71,7 +71,6 @@ bool safe_to_hoist(Instruction *I, BasicBlock *BB, Loop *L, const DominatorTree 
 bool LICM::runOnLoop(Loop *L, LPPassManager &LPM) { 
     BasicBlock *currentLoopHeader = L->getHeader(); // Obtain the current loop header.
     DominatorTree *DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
-    bool changed = false;
  
     for (BasicBlock *BB : L->blocks()) {
         if (DT->dominates(currentLoopHeader, BB) && // each basic block BB dominated by loop header
@@ -88,13 +87,12 @@ bool LICM::runOnLoop(Loop *L, LPPassManager &LPM) {
                     Instruction *term = pre->getTerminator(); 
                     I->moveBefore(term);
                     I->dropUnknownNonDebugMetadata();
-                    changed = true;
                 } 
             }
         }
     }
 
-    return changed;
+    return false;
 }
 
 char LICM::ID = 0;
