@@ -25,14 +25,14 @@ bool _isLoopInvariant(Instruction *I, BasicBlock *BB, Loop *L, const DominatorTr
     bool result = false;
 
     // It is a binary operator, shift, select, cast, getelementptr.
-    if (dyn_cast<ConstantExpr>(I) || (!I || DT->properlyDominates(I->getParent(), L->getHeader()) ||
+    if (dyn_cast<Constant>(I) || (!I || DT->properlyDominates(I->getParent(), L->getHeader()) ||
         I -> isBinaryOp() || I -> isShift() || dyn_cast<SelectInst>(I) || I -> isCast() || dyn_cast<GetElementPtrInst>(I))) {
         for (Use &U : I->operands()) {
             Instruction *Inst = dyn_cast<Instruction>(U);
 
             // All the operands of the instruction are loop invariant.
             // That is, every operand of the instruction is either a constant or computed outside the loop.
-            if (dyn_cast<ConstantExpr>(U) || (!Inst || DT->properlyDominates(Inst->getParent(), L->getHeader()) ||
+            if (dyn_cast<Constant>(U) || (!Inst || DT->properlyDominates(Inst->getParent(), L->getHeader()) ||
                 Inst -> isBinaryOp() || Inst -> isShift() || dyn_cast<SelectInst>(Inst) || Inst -> isCast() || dyn_cast<GetElementPtrInst>(Inst))) {
                 result = true;
             } else { 
