@@ -56,7 +56,7 @@ bool calculate(int operand, int rightside, int leftside, int &result) {
 }
 
 bool ConstProp::runOnFunction(Function &F) {
-    SmallVector<ConstantInt*, 2> consts; 
+    SmallVector<ConstantInt*, 2> C; 
     bool IRchanged = false;
 
     for (BasicBlock &BB : F) {
@@ -64,28 +64,28 @@ bool ConstProp::runOnFunction(Function &F) {
             if (dyn_cast<BinaryOperator>(&I)) { // if instruction is binary operation 
                 for (Use &op : I.operands()) { 
                     if (dyn_cast<ConstantInt>(op)) { // is operand is a constant
-                        consts.push_back(dyn_cast<ConstantInt>(op)); 
+                        C.push_back(dyn_cast<ConstantInt>(op)); 
                     }  
                 }
  
-                if (consts.size() == 2) {
-                    int rightside = consts[consts.size() - 1]->getSExtValue();
-                    int leftside = consts[consts.size() - 2]->getSExtValue();
+                if (C.size() == 2) {
+                    int rightside = C[C.size() - 1]->getSExtValue();
+                    int leftside = C[C.size() - 2]->getSExtValue();
                     int calculatedResult;
                     ConstantInt *retrievedConstInt = nullptr;
 
                 //    LOG_LINE(leftside << " " << rightside);
  
                     if (calculate(I.getOpcode(), rightside, leftside, calculatedResult)) {
-                        retrievedConstInt = ConstantInt::get(consts.back()->getType(), calculatedResult);
-                        consts.pop_back();
+                        retrievedConstInt = ConstantInt::get(C.back()->getType(), calculatedResult);
+                        C.pop_back();
                         if (dyn_cast<Value>(retrievedConstInt)) { 
                             I.replaceAllUsesWith(retrievedConstInt);
                             IRchanged = true;
                         } 
                     }
                 }
-                consts.clear(); 
+                C.clear(); 
             }
         }
     }
