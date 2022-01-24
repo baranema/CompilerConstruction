@@ -19,29 +19,25 @@ void LICM::getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesCFG();
     AU.addRequired<LoopInfoWrapperPass>();
     getLoopAnalysisUsage(AU);
-}   
+}
  
 bool _isLoopInvariant(Instruction *I, BasicBlock *BB, Loop *L, const DominatorTree *DT) {
-    bool result = false;
+    bool invariant = false;
 
     // It is a binary operator, shift, select, cast, getelementptr.
     if (dyn_cast<Constant>(I) || (!I || DT->properlyDominates(I->getParent(), L->getHeader()) ||
         I -> isBinaryOp() || I -> isShift() || dyn_cast<SelectInst>(I) || I -> isCast() || dyn_cast<GetElementPtrInst>(I))) {
         for (Use &U : I->operands()) {
-            Instruction *Inst = dyn_cast<Instruction>(U);
+            Instruction *II = dyn_cast<Instruction>(U);
 
-            // All the operands of the instruction are loop invariant.
-            // That is, every operand of the instruction is either a constant or computed outside the loop.
-            if (dyn_cast<Constant>(U) || (!Inst || DT->properlyDominates(Inst->getParent(), L->getHeader()) ||
-                Inst -> isBinaryOp() || Inst -> isShift() || dyn_cast<SelectInst>(Inst) || Inst -> isCast() || dyn_cast<GetElementPtrInst>(Inst))) {
-                result = true;
-            } else { 
-                return false;
-            } 
+            // All the operands of the instruction has to be loop invariant or constant
+            if (!dyn_cast<Constant>(U) && !_isLoopInvariant(II, BB, L, DT))
+                return false; // return cause not loop invariant
+
+            invariant = true;
         }
     }
-     
-    return result;
+    return invariant;
 }
 
 bool safe_to_hoist(Instruction *I, BasicBlock *BB, Loop *L, const DominatorTree *DT) {
@@ -56,8 +52,7 @@ bool safe_to_hoist(Instruction *I, BasicBlock *BB, Loop *L, const DominatorTree 
     bool result = true;
     for (BasicBlock *eBB : ExitingBlocks) {
         if (!DT->properlyDominates(BB, eBB)) {
-            return false;
-            break;
+            return false; 
         }
     } 
 
@@ -83,15 +78,12 @@ bool LICM::runOnLoop(Loop *L, LPPassManager &LPM) {
                  
                 // move every instruction that is loop invariant and is safe to hoist
                 if (_isLoopInvariant(I, BB, L, DT) && safe_to_hoist(I, BB, L, DT)) {
-                    BasicBlock *pre = L->getLoopPreheader();
-                    Instruction *term = pre->getTerminator(); 
-                    I->moveBefore(term);
-                    I->dropUnknownNonDebugMetadata();
+                    Instruction *II = L->getLoopPreheader()->getTerminator(); 
+                    I->moveBefore(II); 
                 } 
             }
         }
     }
-
     return false;
 }
 

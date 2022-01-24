@@ -37,7 +37,7 @@ bool ADCE::runOnFunction(Function &F) {
         Instruction *I = WorkList.back();
         WorkList.pop_back(); 
 
-        if ( LiveSet.find(I) != LiveSet.end() ) { // if BB containing I is reachable
+        if (LiveSet.find(I) != LiveSet.end()) { // if BB containing I is reachable
             for (auto const &op : I->operands()) { 
                 if (dyn_cast<Instruction>(op)) { // if operand is an instruction
                     Instruction *I_op = dyn_cast<Instruction>(op);
@@ -51,8 +51,7 @@ bool ADCE::runOnFunction(Function &F) {
     // Delete instructions not in LiveSet
     for (BasicBlock *BB : depth_first(&F)) {
         for (Instruction &I : *BB) { 
-
-            if ( LiveSet.find(&I) == LiveSet.end() ) { 
+            if (LiveSet.find(&I) == LiveSet.end()) { 
                 LiveSet.insert({&I, false});  
                 IRchanged = true;
                 I.dropAllReferences();
@@ -61,9 +60,8 @@ bool ADCE::runOnFunction(Function &F) {
     }    
 
     for ( const auto &I : LiveSet ) {
-        if (I.second == false) {
-            I.first->eraseFromParent(); 
-        } 
+        if (I.second == false)
+            I.first->eraseFromParent();
     }  
 
     return IRchanged;
