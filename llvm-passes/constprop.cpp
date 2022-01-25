@@ -16,7 +16,7 @@ bool calculate(int operand, int rightside, int leftside, int &result) {
         operand == Instruction::AShr || operand == Instruction::Add)) {
         result = leftside; 
     } 
-    else if (leftside == 0 && operand == Instruction::Add) { 
+    else if (leftside == 0 && operand == Instruction::Add) {
         result = rightside;
     } 
     else if (rightside == 1 && operand == Instruction::Mul) {

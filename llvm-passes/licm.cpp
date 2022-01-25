@@ -21,7 +21,7 @@ void LICM::getAnalysisUsage(AnalysisUsage &AU) const {
     getLoopAnalysisUsage(AU);
 }
  
-bool _isLoopInvariant(Instruction *I, BasicBlock *BB, Loop *L, const DominatorTree *DT) {
+bool my_isLoopInvariant(Instruction *I, BasicBlock *BB, Loop *L, const DominatorTree *DT) {
     bool invariant = false;
 
     // It is a binary operator, shift, select, cast, getelementptr.
@@ -31,7 +31,7 @@ bool _isLoopInvariant(Instruction *I, BasicBlock *BB, Loop *L, const DominatorTr
             Instruction *II = dyn_cast<Instruction>(U);
 
             // All the operands of the instruction has to be loop invariant or constant
-            if (!dyn_cast<Constant>(U) && !_isLoopInvariant(II, BB, L, DT))
+            if (!dyn_cast<Constant>(U) && !my_isLoopInvariant(II, BB, L, DT))
                 return false; // return cause not loop invariant
 
             invariant = true;
@@ -77,7 +77,7 @@ bool LICM::runOnLoop(Loop *L, LPPassManager &LPM) {
                 Instruction *I = dyn_cast<Instruction>(next++);
                  
                 // move every instruction that is loop invariant and is safe to hoist
-                if (_isLoopInvariant(I, BB, L, DT) && safe_to_hoist(I, BB, L, DT)) {
+                if (my_isLoopInvariant(I, BB, L, DT) && safe_to_hoist(I, BB, L, DT)) {
                     Instruction *II = L->getLoopPreheader()->getTerminator(); 
                     I->moveBefore(II); 
                 } 

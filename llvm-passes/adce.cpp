@@ -6,24 +6,24 @@ using namespace std;
 namespace {
     class ADCE : public FunctionPass {
     public: 
-        SmallVector<Instruction*, 256> WorkList; // idk about the size though, in pdf it says "try to estimate an upper bound for your data structure"
-        DenseMap<Instruction*, bool> LiveSet;
-
         static char ID;
         ADCE() : FunctionPass(ID) {}
         virtual bool runOnFunction(Function &F) override; 
+
         bool IRchanged = false;
+        SmallVector<Instruction*, 256> WorkList; // idk about the size though, in pdf it says "try to estimate an upper bound for your data structure"
+        DenseMap<Instruction*, bool> LiveSet;
     };
 }
 
-bool ADCE::runOnFunction(Function &F) {
+bool ADCE::runOnFunction(Function &F) { 
     LiveSet.clear(); // LiveSet = emptySet
 
     for (BasicBlock *BB: depth_first(&F)) { 
         for (Instruction &I : *BB) {           
             if (I.mayHaveSideEffects() || I.isTerminator() ||
                (dyn_cast<LoadInst>(&I) && dyn_cast<LoadInst>(&I)->isVolatile()) ||
-                dyn_cast<StoreInst>(&I) || dyn_cast<CallInst>(&I)) { // is trivially live
+                dyn_cast<StoreInst>(&I) || dyn_cast<CallInst>(&I)) { // is trivially live (if it has side effects) 
                 LiveSet.insert({&I, true}); // mark live
                 WorkList.push_back(&I); 
             } else if (I.use_empty()) {
@@ -48,7 +48,7 @@ bool ADCE::runOnFunction(Function &F) {
         }
     }
     
-    // Delete instructions not in LiveSet
+    // Delete instructions that is not in LiveSet
     for (BasicBlock *BB : depth_first(&F)) {
         for (Instruction &I : *BB) { 
             if (LiveSet.find(&I) == LiveSet.end()) { 
